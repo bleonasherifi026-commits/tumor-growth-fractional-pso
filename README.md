@@ -127,22 +127,21 @@ class ParticleSwarmOptimizer:
 def save_patient_plot(patient_id, V0, estimated_params, t_exp, V_exp, output_folder):
     """Generates and saves visual calibration plots for fractional vs classical models."""
     t_smooth = np.linspace(0, 6, 121)
-    
     r_est, K_est, alpha_est = estimated_params
-    
+
     # Simulate fitted Fractional Gompertz trajectory
     _, _, V_frac_fit = solve_fractional_gompertz(V0, r_est, K_est, alpha_est, t_smooth)
-    
+
     # Simulate Classical Gompertz trajectory (alpha fixed at 1.0)
     _, _, V_class_fit = solve_fractional_gompertz(V0, r_est, K_est, 1.0, t_smooth)
-    
+
     fig, ax = plt.subplots(figsize=(8, 5), dpi=150)
-    
+
     # Plot curves
     ax.plot(t_smooth, V_class_fit, 'r--', label='Classical Gompertz (alpha=1.0)', linewidth=2)
     ax.plot(t_smooth, V_frac_fit, 'b-', label=f'Fractional Gompertz (alpha={alpha_est:.2f})', linewidth=2.5)
     ax.scatter(t_exp, V_exp, color='black', s=60, zorder=5, label='MRI Observations (t0, t1, t2)')
-    
+
     # Title and labels
     ax.set_title(f'Patient {patient_id} - Model Calibration', fontsize=11, fontweight='bold')
     ax.set_xlabel('Time (Months after baseline MRI t0)', fontsize=10)
@@ -151,16 +150,16 @@ def save_patient_plot(patient_id, V0, estimated_params, t_exp, V_exp, output_fol
     ax.set_xticklabels(['t0 (0m)', '1m', '2m', '3m', 't1 (4m)', '5m', 't2 (6m)'])
     ax.grid(True, linestyle=':', alpha=0.6)
     ax.legend(loc='upper left')
-    
+
     # Display parameter panel
     param_text = f"Estimated: r = {r_est:.4f}, K = {K_est:.2f}, alpha = {alpha_est:.4f}"
     fig.text(0.15, 0.02, param_text, fontsize=9, bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="gray"))
-    
+
     fig.subplots_adjust(left=0.12, right=0.95, top=0.90, bottom=0.22)
-    
+
     file_name = f"patient{patient_id}_mri_fit.png"
     save_path = os.path.join(output_folder, file_name)
-    
+
     plt.savefig(save_path)
     plt.close(fig)
     plt.close('all')
@@ -174,11 +173,11 @@ def main():
     desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
     output_folder = os.path.join(desktop_path, "patient_plots")
     os.makedirs(output_folder, exist_ok=True)
-    
+
     print(f"Figures will be saved in directory: {output_folder}\n")
-    
+
     t_exp = np.array([0.0, 4.0, 6.0])
-    
+
     raw_volumes = [
         np.array([76.44, 66.73, 61.75]),
         np.array([32.67, 35.66, 37.49]),
@@ -201,12 +200,12 @@ def main():
         np.array([9.43, 11.41, 1.34]),
         np.array([64.98, 48.61, 29.82])
     ]
-    
+
     first_20_volumes = raw_volumes[:20]
     patient_dataset = [{"id": idx + 1, "V_exp": vols} for idx, vols in enumerate(first_20_volumes)]
-    
+
     print(f"Prepared {len(patient_dataset)} patients with IDs from 1 to {len(patient_dataset)}.\n")
-    
+
     for p in patient_dataset:
         V_exp = p["V_exp"]
         V0 = V_exp[0]
@@ -214,13 +213,8 @@ def main():
         max_v = np.max(V_exp)
         min_v = np.min(V_exp)
         
-        # Parameter bounds:
-        # r in [0.001, 1.0]
-        # K in [0.1 * min_v, 3.0 * max_v] (allows K < V0 for tumor decay)
-        # alpha in [0.1, 0.95] (ensures visible memory dynamics)
         bounds = [(0.001, 1.0), (0.1 * min_v, 3.0 * max_v), (0.3, 0.95)]
         
-        # Enhanced PSO settings for global search performance
         pso = ParticleSwarmOptimizer(
             num_particles=40,
             iterations=100,
