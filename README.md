@@ -4,7 +4,9 @@ Python implementation of the fractional-order Gompertz model optimized via Parti
 import math
 import os
 import matplotlib
-matplotlib.use('Agg')  # Prevents GUI popup windows during image saving
+
+# Prevents GUI popup windows during image saving
+matplotlib.use('Agg')
 
 # Font configuration to prevent missing font errors
 matplotlib.rcParams['font.family'] = 'sans-serif'
